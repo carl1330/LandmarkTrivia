@@ -1,20 +1,25 @@
 package se.umu.cs.dv21cgn.landmarktrivia
 
 import android.os.Bundle
+import android.widget.AutoCompleteTextView
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import com.google.android.libraries.places.api.Places
+import se.umu.cs.dv21cgn.landmarktrivia.ui.composables.CitySearchBar
+import se.umu.cs.dv21cgn.landmarktrivia.ui.composables.TriviaCard
 import se.umu.cs.dv21cgn.landmarktrivia.ui.theme.LandmarkTriviaTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if(!Places.isInitialized()) {
+            Places.initialize(this, getString(R.string.GOOGLE_MAPS_KEY))
+        }
         setContent {
             LandmarkTriviaTheme {
                 // A surface container using the 'background' color from the theme
@@ -22,25 +27,14 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    Greeting("Android")
+                    Column {
+                        CitySearchBar()
+                        TriviaCard(title = "Umeå", description = "Oskar är inte en bajs") {
+
+                        }
+                    }
                 }
             }
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    LandmarkTriviaTheme {
-        Greeting("Android")
     }
 }
