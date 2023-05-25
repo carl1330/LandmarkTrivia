@@ -67,6 +67,8 @@ fun CitySearchBar() {
     }
 }
 
+//TODO move this to data.api and make it return a list of tuples with location name and id,
+//this feels very yank lol
 private fun mapsAutocomplete(query: String, context: Context, mutableOptions: MutableState<List<String>>) {
     val token = AutocompleteSessionToken.newInstance()
     val placesClient = Places.createClient(context)
