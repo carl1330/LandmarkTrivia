@@ -17,12 +17,24 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.LocationOn
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
@@ -48,10 +60,11 @@ class LandmarkTrivia : ComponentActivity() {
         setContent {
             val scope = CoroutineScope(Dispatchers.IO)
             val (cards, setCards) = remember { mutableStateOf(LocationResult()) }
+            val showNoLocationDialog = remember { mutableStateOf(false) }
             val locationLauncher = rememberLauncherForActivityResult(
                 ActivityResultContracts.RequestPermission()
             ) { isGranted ->
-                Toast.makeText(this, "Locations is $isGranted", Toast.LENGTH_SHORT).show()
+
             }
             val context = this
 
@@ -70,6 +83,7 @@ class LandmarkTrivia : ComponentActivity() {
                                 val result = location.await()
                                 //Since it seems like every location has different rules for what counts
                                 //as a locality (City) this is the best i can do :(
+                                //TODO See if i can create a function that gets the city through other values
                                 if(location.isCompleted) {
                                     if (!result.isNullOrEmpty()) {
                                         if(!result[0].locality.isNullOrEmpty())
@@ -85,8 +99,7 @@ class LandmarkTrivia : ComponentActivity() {
                         }
                     }
                     shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_COARSE_LOCATION) -> {
-                        //SHOW DIALOG THAT SAYS IN ORDER TO USE THIS FEATURE YOU NEED TO ALLOW
-                        //LOCATION PERMISSIONS
+                        showNoLocationDialog.value = true
                     }
                     else -> {
                         requestPermissionLauncher.launch(
@@ -106,6 +119,17 @@ class LandmarkTrivia : ComponentActivity() {
                             .fillMaxWidth()
                             .padding(16.dp)
                     ) {
+                        if(showNoLocationDialog.value) {
+                            AlertDialog(
+                                onDismissRequest = { showNoLocationDialog.value = false },
+                                icon = { Icon(Icons.Outlined.LocationOn, "") },
+                                title = { Text(text = "This functionality requires location access", textAlign = TextAlign.Center) },
+                                text = { Text(text = "Seems like you have permanently disabled location access for LandmarkTrivia, in order to use this functionality please enable location in the application settings", textAlign = TextAlign.Center) },
+                                confirmButton = { TextButton(onClick = { showNoLocationDialog.value = false }) {
+                                    Text(text = "Ok")
+                                } },
+                            )
+                        }
                         CitySearchBar(setCards,
                             onGetLocationClick = {
                                 getUserLocation(context, locationLauncher, fusedLocationClient)
