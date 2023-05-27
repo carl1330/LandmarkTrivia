@@ -1,62 +1,95 @@
 package se.umu.cs.dv21cgn.landmarktrivia.ui.composables
-import android.content.Context
-import android.util.Log
+import android.Manifest
+import android.annotation.SuppressLint
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.LocationOn
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import com.google.android.gms.common.api.ApiException
-import com.google.android.libraries.places.api.Places
-import com.google.android.libraries.places.api.model.AutocompleteSessionToken
-import com.google.android.libraries.places.api.model.PlaceTypes
-import com.google.android.libraries.places.api.net.FindAutocompletePredictionsRequest
-import com.google.android.libraries.places.api.net.FindAutocompletePredictionsResponse
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.PopupProperties
+import com.google.android.gms.location.LocationServices
+import se.umu.cs.dv21cgn.landmarktrivia.data.api.MapsAPI
+import se.umu.cs.dv21cgn.landmarktrivia.data.types.LocationResult
+import se.umu.cs.dv21cgn.landmarktrivia.data.types.SearchBarTuple
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class)
+@SuppressLint("MutableCollectionMutableState")
 @Composable
-fun CitySearchBar() {
+fun CitySearchBar(setLocationResult: (LocationResult) -> Unit) {
+    var searchBarValue by remember { mutableStateOf("") }
     var expanded by remember { mutableStateOf(false) }
-    var selectedOptionText by remember { mutableStateOf("") }
-    val options = remember { mutableStateOf(listOf("")) }
+    val (options, setOptions) = remember { mutableStateOf(listOf<SearchBarTuple>()) }
     val context = LocalContext.current
+    val mapsApi = MapsAPI(context)
+    val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
 
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { expanded = !expanded },
-    ) {
+
+    fun updateOptions() {
+        mapsApi.mapsAutocomplete(searchBarValue, setOptions)
+    }
+
+    fun updateLocation(id: String) {
+        mapsApi.mapsFetchPlace(id, searchBarValue, setLocationResult)
+    }
+
+    ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
         TextField(
-            // The `menuAnchor` modifier must be passed to the text field for correctness.
-            modifier = Modifier.menuAnchor(),
-            value = selectedOptionText,
+            modifier = Modifier
+                .menuAnchor()
+                .fillMaxWidth(),
+            value = searchBarValue,
             onValueChange = {
-                selectedOptionText = it
+                searchBarValue = it
                 expanded = true
-                mapsAutocomplete(selectedOptionText, context, options)
+                updateOptions()
             },
+            shape = RoundedCornerShape(50.dp),
+            trailingIcon = {
+                IconButton(onClick = {}) {
+                    Icon(Icons.Outlined.LocationOn, "")
+                }
+            },
+            colors = TextFieldDefaults.textFieldColors(
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent,
+                disabledIndicatorColor = Color.Transparent
+            )
         )
-        // filter options based on text field value
-        val filteringOptions = options.value.filter { it.contains(selectedOptionText, ignoreCase = true) }
+        val filteringOptions = options.filter { it.city.contains(searchBarValue, ignoreCase = true) }
         if (filteringOptions.isNotEmpty()) {
-            ExposedDropdownMenu(
+            DropdownMenu(
                 expanded = expanded,
                 onDismissRequest = { expanded = false },
+                properties = PopupProperties(focusable = false),
+                modifier = Modifier.exposedDropdownSize(matchTextFieldWidth = true)
             ) {
                 filteringOptions.forEach { selectionOption ->
                     DropdownMenuItem(
-                        text = { Text(selectionOption) },
+                        text = { Text(selectionOption.city) },
                         onClick = {
-                            selectedOptionText = selectionOption
+                            searchBarValue = selectionOption.city
+                            updateLocation(selectionOption.id)
                             expanded = false
                         },
                         contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
@@ -66,30 +99,3 @@ fun CitySearchBar() {
         }
     }
 }
-
-//TODO move this to data.api and make it return a list of tuples with location name and id,
-//this feels very yank lol
-private fun mapsAutocomplete(query: String, context: Context, mutableOptions: MutableState<List<String>>) {
-    val token = AutocompleteSessionToken.newInstance()
-    val placesClient = Places.createClient(context)
-    val options = arrayListOf<String>()
-    val request =
-        FindAutocompletePredictionsRequest.builder()
-            .setSessionToken(token)
-            .setTypesFilter(listOf(PlaceTypes.CITIES))
-            .setQuery(query)
-            .build()
-
-    placesClient.findAutocompletePredictions(request)
-        .addOnSuccessListener { response: FindAutocompletePredictionsResponse ->
-            for (prediction in response.autocompletePredictions) {
-                options.add(prediction.getPrimaryText(null).toString())
-            }
-            mutableOptions.value = options
-        }.addOnFailureListener { exception: Exception? ->
-            if (exception is ApiException) {
-                Log.e("MAPS_API", "Place not found: ${exception.statusCode}")
-            }
-        }
-}
-

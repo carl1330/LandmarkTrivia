@@ -12,6 +12,7 @@ import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -35,7 +36,8 @@ fun TriviaCard(
     ) {
         Image(
             painter = painterResource(R.drawable.ic_launcher_background),
-            modifier = modifier.fillMaxWidth()
+            modifier = modifier
+                .fillMaxWidth()
                 .height(120.dp),
             contentScale = ContentScale.Crop,
             contentDescription = null
@@ -50,7 +52,9 @@ fun TriviaCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = modifier.fillMaxWidth()
             ){
-                Icon(Icons.Outlined.Info, null)
+                IconButton(onClick = { /* TODO */ }) {
+                    Icon(Icons.Outlined.Info, contentDescription = "")
+                }
                 Button(onClick = onClick) {
                     Text(text = "Start")
                 }
