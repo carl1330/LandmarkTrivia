@@ -14,27 +14,28 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.SerialName
 
 
-class UnsplashAPI(val apiKey: String) {
-    val client = HttpClient(CIO) {
-        install(ContentNegotiation) {
-            json(Json {
-                prettyPrint = true
-                ignoreUnknownKeys = true
-                coerceInputValues = true
-            })
-        }
-    }
+class UnsplashAPI(private val apiKey: String) {
     private val baseURL = "api.unsplash.com"
 
     suspend fun getPhotoByKeyword(query: String): UnsplashResponse {
-        val response: UnsplashResponse = client.get{
-            url {
-                protocol = URLProtocol.HTTPS
-                host = baseURL
-                path("search/photos")
-                parameters.append("query", query)
-                parameters.append("client_id", apiKey)
-                parameters.append("orientation", "landscape")
+        val response: UnsplashResponse = HttpClient {
+            install(ContentNegotiation) {
+                json(Json {
+                    prettyPrint = true
+                    ignoreUnknownKeys = true
+                    coerceInputValues = true
+                })
+            }
+        }.use { client ->
+            client.get {
+                url {
+                    protocol = URLProtocol.HTTPS
+                    host = baseURL
+                    path("search/photos")
+                    parameters.append("query", query)
+                    parameters.append("client_id", apiKey)
+                    parameters.append("orientation", "landscape")
+                }
             }
         }.body()
 
