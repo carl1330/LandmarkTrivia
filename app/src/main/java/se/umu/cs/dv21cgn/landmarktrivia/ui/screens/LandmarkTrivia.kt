@@ -23,6 +23,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -38,6 +39,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import se.umu.cs.dv21cgn.landmarktrivia.R
+import se.umu.cs.dv21cgn.landmarktrivia.data.api.UnsplashAPI
 import se.umu.cs.dv21cgn.landmarktrivia.data.types.LocationResult
 import se.umu.cs.dv21cgn.landmarktrivia.ui.composables.CitySearchBar
 import se.umu.cs.dv21cgn.landmarktrivia.ui.composables.TriviaCard
@@ -50,6 +52,7 @@ class LandmarkTrivia : ComponentActivity() {
             Places.initialize(this, getString(R.string.GOOGLE_MAPS_KEY))
         }
         val fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+        val unsplashClient = UnsplashAPI(getString(R.string.UNSPLASH_API_KEY))
         setContent {
             val scope = CoroutineScope(Dispatchers.IO)
             val (cards, setCards) = remember { mutableStateOf(LocationResult()) }
@@ -134,29 +137,50 @@ class LandmarkTrivia : ComponentActivity() {
                             verticalArrangement = Arrangement.spacedBy(16.dp),
                             content = {
                                 if(cards.city != "") {
+                                    val image = mutableStateOf("")
+                                    val isFetching = mutableStateOf(true)
+                                    scope.launch {
+                                        fetchImage(scope, unsplashClient, cards.city, image, isFetching)
+                                    }
                                     item {
                                         TriviaCard(
                                             title = cards.city,
                                             description = "Learn more about ${cards.city} through a quick quiz!",
-                                            onClick = {}
+                                            onClick = {},
+                                            imageUrl = image.value,
+                                            isFetching = isFetching.value
                                         )
                                     }
                                 }
                                 if(cards.municipality != "") {
+                                    val image = mutableStateOf("")
+                                    val isFetching = mutableStateOf(true)
+                                    scope.launch {
+                                        fetchImage(scope, unsplashClient, cards.municipality, image, isFetching)
+                                    }
                                     item {
                                         TriviaCard(
                                             title = cards.municipality,
                                             description = "Trivia quiz about the surrounding areas",
-                                            onClick = {}
+                                            onClick = {},
+                                            imageUrl = image.value,
+                                            isFetching = isFetching.value
                                         )
                                     }
                                 }
                                 if(cards.country != "") {
+                                    val image = mutableStateOf("")
+                                    val isFetching = mutableStateOf(true)
+                                    scope.launch {
+                                        fetchImage(scope, unsplashClient, cards.country, image, isFetching)
+                                    }
                                     item {
                                         TriviaCard(
                                             title = cards.country,
                                             description = "Check your knowledge about the country of ${cards.country}",
-                                            onClick = {}
+                                            onClick = {},
+                                            imageUrl = image.value,
+                                            isFetching = isFetching.value
                                         )
                                     }
                                 }
@@ -165,6 +189,25 @@ class LandmarkTrivia : ComponentActivity() {
                     }
                 }
             }
+        }
+    }
+
+    private suspend fun fetchImage(
+        scope: CoroutineScope,
+        unsplashClient: UnsplashAPI,
+        query: String,
+        image: MutableState<String>,
+        isFetching: MutableState<Boolean>
+    ) {
+        val response = scope.async {
+            unsplashClient.getPhotoByKeyword(query)
+        }
+        val result = response.await()
+        if (response.isCompleted) {
+            if (!result.results.isNullOrEmpty()) {
+                image.value = result.results.random().urls?.regular.toString()
+            }
+            isFetching.value = false
         }
     }
 }
