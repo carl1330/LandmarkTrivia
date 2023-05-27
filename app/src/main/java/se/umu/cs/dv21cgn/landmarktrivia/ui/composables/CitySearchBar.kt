@@ -1,8 +1,5 @@
 package se.umu.cs.dv21cgn.landmarktrivia.ui.composables
-import android.Manifest
 import android.annotation.SuppressLint
-import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -28,22 +25,22 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
-import com.google.android.gms.location.LocationServices
 import se.umu.cs.dv21cgn.landmarktrivia.data.api.MapsAPI
 import se.umu.cs.dv21cgn.landmarktrivia.data.types.LocationResult
 import se.umu.cs.dv21cgn.landmarktrivia.data.types.SearchBarTuple
 
-@OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("MutableCollectionMutableState")
 @Composable
-fun CitySearchBar(setLocationResult: (LocationResult) -> Unit) {
+fun CitySearchBar(
+    setLocationResult: (LocationResult) -> Unit,
+    onGetLocationClick: () -> Unit,
+) {
     var searchBarValue by remember { mutableStateOf("") }
     var expanded by remember { mutableStateOf(false) }
     val (options, setOptions) = remember { mutableStateOf(listOf<SearchBarTuple>()) }
     val context = LocalContext.current
     val mapsApi = MapsAPI(context)
-    val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
-
 
     fun updateOptions() {
         mapsApi.mapsAutocomplete(searchBarValue, setOptions)
@@ -66,7 +63,7 @@ fun CitySearchBar(setLocationResult: (LocationResult) -> Unit) {
             },
             shape = RoundedCornerShape(50.dp),
             trailingIcon = {
-                IconButton(onClick = {}) {
+                IconButton(onClick = onGetLocationClick) {
                     Icon(Icons.Outlined.LocationOn, "")
                 }
             },
