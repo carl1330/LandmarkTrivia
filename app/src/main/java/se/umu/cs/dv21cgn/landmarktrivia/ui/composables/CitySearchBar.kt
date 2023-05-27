@@ -1,9 +1,12 @@
 package se.umu.cs.dv21cgn.landmarktrivia.ui.composables
 import android.annotation.SuppressLint
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.LocationOn
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -25,6 +28,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
+import org.intellij.lang.annotations.JdkConstants.HorizontalAlignment
 import se.umu.cs.dv21cgn.landmarktrivia.data.api.MapsAPI
 import se.umu.cs.dv21cgn.landmarktrivia.data.types.LocationResult
 import se.umu.cs.dv21cgn.landmarktrivia.data.types.SearchBarTuple
@@ -63,9 +67,7 @@ fun CitySearchBar(
             },
             shape = RoundedCornerShape(50.dp),
             trailingIcon = {
-                IconButton(onClick = onGetLocationClick) {
-                    Icon(Icons.Outlined.LocationOn, "")
-                }
+                Icon(Icons.Outlined.Search, contentDescription = "Location search bar")
             },
             colors = TextFieldDefaults.textFieldColors(
                 focusedIndicatorColor = Color.Transparent,
@@ -74,13 +76,28 @@ fun CitySearchBar(
             )
         )
         val filteringOptions = options.filter { it.city.contains(searchBarValue, ignoreCase = true) }
-        if (filteringOptions.isNotEmpty()) {
-            DropdownMenu(
+        DropdownMenu(
                 expanded = expanded,
                 onDismissRequest = { expanded = false },
                 properties = PopupProperties(focusable = false),
                 modifier = Modifier.exposedDropdownSize(matchTextFieldWidth = true)
-            ) {
+        ) {
+            DropdownMenuItem(
+                text = {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(text = "Use current location")
+                        Icon(Icons.Outlined.LocationOn, contentDescription = "")
+                    }
+                 },
+                onClick = {
+                    expanded = false
+                },
+                contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
+                )
+            if (filteringOptions.isNotEmpty()) {
                 filteringOptions.forEach { selectionOption ->
                     DropdownMenuItem(
                         text = { Text(selectionOption.city) },
