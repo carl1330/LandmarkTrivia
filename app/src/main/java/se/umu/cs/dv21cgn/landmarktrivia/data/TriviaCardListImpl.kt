@@ -1,5 +1,11 @@
 package se.umu.cs.dv21cgn.landmarktrivia.data
 
+import android.Manifest
+import android.annotation.SuppressLint
+import androidx.annotation.RequiresPermission
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.PermissionState
+import com.google.accompanist.permissions.isGranted
 import com.google.android.gms.tasks.Task
 import com.google.android.libraries.places.api.model.AutocompleteSessionToken
 import com.google.android.libraries.places.api.model.PhotoMetadata
@@ -11,6 +17,8 @@ import com.google.android.libraries.places.api.net.FetchPlaceRequest
 import com.google.android.libraries.places.api.net.FetchPlaceResponse
 import com.google.android.libraries.places.api.net.FindAutocompletePredictionsRequest
 import com.google.android.libraries.places.api.net.FindAutocompletePredictionsResponse
+import com.google.android.libraries.places.api.net.FindCurrentPlaceRequest
+import com.google.android.libraries.places.api.net.FindCurrentPlaceResponse
 import com.google.android.libraries.places.api.net.PlacesClient
 
 class TriviaCardListImpl(
@@ -44,5 +52,12 @@ class TriviaCardListImpl(
                     .build()
 
         return client.fetchPlace(request)
+    }
+
+    @RequiresPermission(Manifest.permission.ACCESS_COARSE_LOCATION)
+    override fun getCurrentPlace(): Task<FindCurrentPlaceResponse> {
+        val request = FindCurrentPlaceRequest.newInstance(listOf(Place.Field.ADDRESS, Place.Field.PHOTO_METADATAS, Place.Field.ID))
+
+        return client.findCurrentPlace(request)
     }
 }

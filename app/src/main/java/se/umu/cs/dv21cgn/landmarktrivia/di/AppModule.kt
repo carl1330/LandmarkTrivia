@@ -1,6 +1,9 @@
 package se.umu.cs.dv21cgn.landmarktrivia.di
 
 import android.app.Application
+import androidx.activity.result.ActivityResultLauncher
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 import com.google.android.libraries.places.api.Places
 import com.google.android.libraries.places.api.net.PlacesClient
 import dagger.Module
@@ -26,4 +29,11 @@ object AppModule {
     fun provideTriviaCardListRepository(client: PlacesClient) : TriviaCardListRepository {
         return TriviaCardListImpl(client)
     }
+
+    @Provides
+    @Singleton
+    fun provideLocationProvider(app: Application) : FusedLocationProviderClient {
+        return LocationServices.getFusedLocationProviderClient(app)
+    }
+
 }

@@ -26,8 +26,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.graphics.createBitmap
-import androidx.hilt.navigation.compose.hiltViewModel
 import se.umu.cs.dv21cgn.landmarktrivia.R
 
 @Composable
@@ -100,6 +98,6 @@ fun TriviaCardPreview() {
         title = "Umeå",
         description = "Short description about Umeå",
         onClick = {},
-        isFetching = false
+        isFetching = true
     )
 }

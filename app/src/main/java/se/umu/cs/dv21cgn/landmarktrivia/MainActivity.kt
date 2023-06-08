@@ -7,21 +7,24 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.google.android.libraries.places.api.Places
 import dagger.hilt.android.AndroidEntryPoint
 import se.umu.cs.dv21cgn.landmarktrivia.ui.theme.LandmarkTriviaTheme
 import se.umu.cs.dv21cgn.landmarktrivia.ui.screens.Screen
 import se.umu.cs.dv21cgn.landmarktrivia.ui.screens.triviacardlistscreen.TriviaCardListScreen
+import se.umu.cs.dv21cgn.landmarktrivia.ui.screens.triviagamescreen.TriviaGameScreen
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (!Places.isInitialized()) {
-            Places.initialize(this, "AIzaSyC-SrIdW411DQVE5J5I2_sc27ncbve-el4");
+            Places.initialize(this, getString(R.string.PLACES_API_KEY));
         }
         setContent {
             LandmarkTriviaTheme {
@@ -38,7 +41,26 @@ class MainActivity : ComponentActivity() {
                         composable(
                             route = Screen.TriviaCardScreen.route
                         ) {
-                            TriviaCardListScreen()
+                            TriviaCardListScreen(navController)
+                        }
+                        composable(
+                            route = Screen.TriviaGameScreen.route + "/{type}/{title}",
+                            arguments = listOf(
+                                navArgument("type") {
+                                    type = NavType.StringType
+                                },
+                                navArgument("title") {
+                                    type = NavType.StringType
+                                }
+                            )
+                        ) {
+                            val type = it.arguments?.getString("type")!!
+                            val title = it.arguments?.getString("title")!!
+
+                            TriviaGameScreen(
+                                navController = navController,
+                                title = title
+                            )
                         }
                     }
                 }

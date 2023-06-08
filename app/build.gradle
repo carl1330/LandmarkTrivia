@@ -97,6 +97,18 @@ dependencies {
     //Places
     implementation 'com.google.android.libraries.places:places:3.1.0'
 
+    //Location API
+    def activity_version = "1.7.2"
+    def fragment_version = "1.6.0"
+    implementation "androidx.activity:activity-ktx:$activity_version"
+    implementation "androidx.fragment:fragment-ktx:$fragment_version"
+
+    //Permissions
+    implementation "com.google.accompanist:accompanist-permissions:0.31.3-beta"
+
+    //GSON
+    implementation 'com.google.code.gson:gson:2.10.1'
+
 }
 
 // Allow references to generated code
