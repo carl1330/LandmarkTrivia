@@ -11,15 +11,19 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
@@ -33,24 +37,25 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import se.umu.cs.dv21cgn.landmarktrivia.ui.screens.triviagamescreen.components.QuestionPanel
 
+/**
+ * The trivia game screen, on start will show a loading icon until trivia questions have
+ * finished generating.
+ * If an error occurs it will show an AlertDialog displaying the error message to the user.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TriviaGameScreen(
     viewModel: TriviaGameViewModel = hiltViewModel(),
     navController: NavController,
-    title: String
+    title: String,
+    type: String
 ) {
-    Box(modifier = Modifier
-        .fillMaxSize()
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
     ) {
-        val (selectedOption, onOptionSelected) = remember { mutableStateOf(viewModel.state[viewModel.currentQuestionIndex.value].choices[0]) }
-        val sendIntent: Intent = Intent().apply {
-            action = Intent.ACTION_SEND
-            putExtra(Intent.EXTRA_TEXT, "I just scored ${viewModel.score.value}/5 on LandmarkTrivia! \uD83C\uDF89\uD83E\uDD73")
-            type = "text/plain"
-        }
+        val shareIntent = createShareIntent(viewModel, type, title)
         val context = LocalContext.current
-        val shareIntent = Intent.createChooser(sendIntent, null)
 
         Column {
             TopAppBar(
@@ -62,76 +67,137 @@ fun TriviaGameScreen(
                     }
                 }
             )
-            if(!viewModel.gameOverState.value) {
-                Column(
-                    modifier = Modifier
-                        .padding(8.dp)
-                        .fillMaxHeight(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
+            if (viewModel.isLoading.value) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        modifier = Modifier.fillMaxWidth(),
-                        text = "Question ${viewModel.currentQuestionIndex.value + 1}",
-                        textAlign = TextAlign.Center,
-                        fontSize = MaterialTheme.typography.headlineLarge.fontSize
-                    )
-                    QuestionPanel(
-                        question = viewModel.state[viewModel.currentQuestionIndex.value].question,
-                        choices = viewModel.state.get(viewModel.currentQuestionIndex.value).choices,
-                        selectedOption = selectedOption,
-                        onOptionSelected = onOptionSelected
-                    )
-                    Button(
-                        onClick = {
-                            viewModel.checkAnswer(
-                                viewModel.state[viewModel.currentQuestionIndex.value].choices.indexOf(
-                                    selectedOption
-                                )
-                            )
-                            viewModel.goToNextQuestion()
-                        },
-                        modifier = Modifier.align(Alignment.End)
-                    ) {
-                        Text(text = "Answer")
-                    }
+                    CircularProgressIndicator()
                 }
             } else {
-                Column(
-                    modifier = Modifier
-                        .padding(8.dp)
-                        .fillMaxHeight(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        modifier = Modifier.fillMaxWidth(),
-                        text = "Results",
-                        fontSize = MaterialTheme.typography.headlineLarge.fontSize,
-                        textAlign = TextAlign.Center
-                    )
-                    Text(
-                        modifier = Modifier.fillMaxWidth(),
-                        text = "You got ${viewModel.score.value}/5 questions correct!\n\uD83C\uDF89\uD83E\uDD73",
-                        textAlign = TextAlign.Center
-                    )
-                    Button(
-                        onClick = {
-                            context.startActivity(shareIntent)
-                        },
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
+                if(viewModel.error.value) {
+                    if (viewModel.errorMessage.value != "") {
+                        AlertDialog(
+                            onDismissRequest = {
+                                viewModel.confirmError()
+                            },
+                            confirmButton = {
+                                TextButton(onClick = {
+                                    viewModel.confirmError()
+                                }) {
+                                    Text(text = "Confirm")
+                                }
+                            },
+                            title = { Text(text = "Error") },
+                            text = { Text(text = viewModel.errorMessage.value) },
+                        )
+                    }
+                } else {
+                    if (!viewModel.gameOverState.value) {
+                        val (selectedOption, onOptionSelected) = remember { mutableStateOf("") }
+                        LazyColumn(
+                            modifier = Modifier
+                                .padding(16.dp)
+                                .fillMaxHeight(),
+                            verticalArrangement = Arrangement.spacedBy(
+                                8.dp,
+                                Alignment.CenterVertically
+                            ),
+                            horizontalAlignment = Alignment.End
                         ) {
-                            Icon(Icons.Filled.Share, contentDescription = "Share result on social media")
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(text = "Share")
+                            item {
+                                Text(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    text = "Question ${viewModel.currentQuestionIndex.value + 1}",
+                                    textAlign = TextAlign.Center,
+                                    fontSize = MaterialTheme.typography.headlineLarge.fontSize
+                                )
+                                QuestionPanel(
+                                    question = viewModel.state.value[viewModel.currentQuestionIndex.value].question,
+                                    choices = viewModel.state.value[viewModel.currentQuestionIndex.value].choices,
+                                    selectedOption = selectedOption,
+                                    onOptionSelected = onOptionSelected
+                                )
+                                Button(
+                                    onClick = {
+                                        viewModel.checkAnswer(
+                                            viewModel.state.value[viewModel.currentQuestionIndex.value].choices.indexOf(
+                                                selectedOption
+                                            )
+                                        )
+                                        viewModel.goToNextQuestion()
+                                    }
+                                ) {
+                                    Text(text = "Answer")
+                                }
+                            }
+                        }
+                    } else {
+                        Column(
+                            modifier = Modifier
+                                .padding(16.dp)
+                                .fillMaxHeight(),
+                            verticalArrangement = Arrangement.spacedBy(
+                                8.dp,
+                                Alignment.CenterVertically
+                            ),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                modifier = Modifier.fillMaxWidth(),
+                                text = "Results",
+                                fontSize = MaterialTheme.typography.headlineLarge.fontSize,
+                                textAlign = TextAlign.Center
+                            )
+                            Text(
+                                modifier = Modifier.fillMaxWidth(),
+                                text = "You got ${viewModel.score.value}/5 questions correct!\n\uD83C\uDF89\uD83E\uDD73",
+                                textAlign = TextAlign.Center
+                            )
+                            Button(
+                                onClick = {
+                                    context.startActivity(shareIntent)
+                                },
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Icon(
+                                        Icons.Filled.Share,
+                                        contentDescription = "Share result on social media"
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(text = "Share")
+                                }
+                            }
                         }
                     }
                 }
             }
         }
     }
+}
+
+/**
+ * Creates a new Android Sharesheet intent where the user
+ * can then share their score for example social media apps.
+ * https://developer.android.com/training/sharing/send#using-android-system-sharesheet
+ */
+private fun createShareIntent(
+    viewModel: TriviaGameViewModel,
+    type: String,
+    title: String
+): Intent {
+    val sendIntent: Intent = Intent().apply {
+        action = Intent.ACTION_SEND
+        putExtra(
+            Intent.EXTRA_TEXT,
+            "I just scored ${viewModel.score.value}/5 on a quiz about the $type of $title on LandmarkTrivia! \uD83C\uDF89\uD83E\uDD73"
+        )
+        this.type = "text/plain"
+    }
+    return Intent.createChooser(sendIntent, null)
 }
 
 

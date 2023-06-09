@@ -1,7 +1,7 @@
 package se.umu.cs.dv21cgn.landmarktrivia.di
 
 import android.app.Application
-import androidx.activity.result.ActivityResultLauncher
+import com.aallam.openai.client.OpenAI
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.libraries.places.api.Places
@@ -10,6 +10,7 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import se.umu.cs.dv21cgn.landmarktrivia.BuildConfig
 import se.umu.cs.dv21cgn.landmarktrivia.data.TriviaCardListImpl
 import se.umu.cs.dv21cgn.landmarktrivia.data.TriviaCardListRepository
 import javax.inject.Singleton
@@ -36,4 +37,11 @@ object AppModule {
         return LocationServices.getFusedLocationProviderClient(app)
     }
 
+    @Provides
+    @Singleton
+    fun provideOpenAiClient() : OpenAI {
+        return OpenAI(
+            token = BuildConfig.OPENAI_API_KEY
+        )
+    }
 }

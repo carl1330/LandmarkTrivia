@@ -2,9 +2,9 @@ package se.umu.cs.dv21cgn.landmarktrivia.ui.screens.triviacardlistscreen.compone
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.pm.PackageManager
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -24,37 +24,33 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
-import com.google.android.gms.location.LocationServices
-import com.google.android.gms.location.Priority
-import com.google.android.gms.tasks.CancellationTokenSource
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import se.umu.cs.dv21cgn.landmarktrivia.ui.screens.triviacardlistscreen.TriviaCardListViewModel
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class,
+    ExperimentalComposeUiApi::class
+)
 @SuppressLint("MutableCollectionMutableState")
 @Composable
 fun SearchBar(
-    modifier: Modifier = Modifier,
     viewModel: TriviaCardListViewModel,
 ) {
     var searchBarValue by remember { mutableStateOf("") }
     var expanded by remember { mutableStateOf(false) }
     val options = viewModel.state.value.placePredictions
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    val locationClient = LocationServices.getFusedLocationProviderClient(context)
+    val keyboardController = LocalSoftwareKeyboardController.current
 
 
     val locationPermissionState = rememberPermissionState(
@@ -108,10 +104,17 @@ fun SearchBar(
                             locationPermissionState.permission
                         ) == PackageManager.PERMISSION_GRANTED) {
                             viewModel.updateLocationWithCurrentLocation()
+                        }
+                        else if(ActivityCompat.shouldShowRequestPermissionRationale(
+                                context as Activity,
+                                locationPermissionState.permission
+                            )) {
+                            viewModel.enableShouldShowRationale()
                         } else {
                             locationPermissionState.launchPermissionRequest()
                         }
                         expanded = false
+                        keyboardController?.hide()
                     },
                     contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
                 )
@@ -124,6 +127,7 @@ fun SearchBar(
                             searchBarValue = selectionOption.placeFullText
                             expanded = false
                             viewModel.updateLocation(selectionOption.placeId)
+                            keyboardController?.hide()
                         },
                         contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
                     )

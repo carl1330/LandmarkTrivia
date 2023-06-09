@@ -24,7 +24,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (!Places.isInitialized()) {
-            Places.initialize(this, getString(R.string.PLACES_API_KEY));
+            Places.initialize(this, BuildConfig.PLACE_API_KEY)
         }
         setContent {
             LandmarkTriviaTheme {
@@ -59,7 +59,8 @@ class MainActivity : ComponentActivity() {
 
                             TriviaGameScreen(
                                 navController = navController,
-                                title = title
+                                title = title,
+                                type = type
                             )
                         }
                     }

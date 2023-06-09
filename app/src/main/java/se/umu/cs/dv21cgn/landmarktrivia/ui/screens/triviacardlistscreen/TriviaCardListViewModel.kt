@@ -1,24 +1,12 @@
 package se.umu.cs.dv21cgn.landmarktrivia.ui.screens.triviacardlistscreen
 
 import android.Manifest
-import android.content.Context
-import android.content.pm.PackageManager
-import android.util.Log
 import androidx.annotation.RequiresPermission
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.PermissionState
-import com.google.accompanist.permissions.isGranted
 import com.google.android.gms.common.api.ApiException
-import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.Priority
-import com.google.android.gms.tasks.CancellationTokenSource
-import com.google.android.libraries.places.api.model.PlaceLikelihood
 import com.google.android.libraries.places.api.model.PlaceTypes
 import com.google.android.libraries.places.api.net.FetchPhotoResponse
 import com.google.android.libraries.places.api.net.FetchPlaceResponse
@@ -45,6 +33,10 @@ class TriviaCardListViewModel @Inject constructor(
     val country: State<TriviaCardState> = _country
 
 
+    /**
+     * Update the Autocomplete prediction list from a query
+     * Used when the user types something in the SearchBar composable
+     */
     fun updatePredictions(query: String) {
         val predictionList = arrayListOf<AutocompletePredictionResponse>()
         val response = repository.getPlacePredictionsByQuery(query)
@@ -61,9 +53,16 @@ class TriviaCardListViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Updates the current location
+     */
     fun updateLocation(id: String) {
+        _city.value = TriviaCardState()
+        _admin.value = TriviaCardState()
+        _country.value = TriviaCardState()
         val response = repository.getPlaceById(id)
         response.addOnSuccessListener { result ->
+            _state.value = TriviaCardListState(state.value.placePredictions, state.value.locationId, false, state.value.shouldShowRationale)
             result.place.addressComponents?.asList()?.forEach { location ->
                 when {
                     location.types.contains(PlaceTypes.LOCALITY) || location.types.contains(PlaceTypes.ADMINISTRATIVE_AREA_LEVEL_3) || location.types.contains(PlaceTypes.ADMINISTRATIVE_AREA_LEVEL_2) || location.types.contains(PlaceTypes.SUBLOCALITY) -> {
@@ -78,8 +77,8 @@ class TriviaCardListViewModel @Inject constructor(
                     location.types.contains(PlaceTypes.ADMINISTRATIVE_AREA_LEVEL_1) -> {
                         _admin.value =
                             TriviaCardState(
-                                title = location.name,
-                                description = "Learn more about ${location.name} through a quick quiz",
+                                title = "District of ${location.name}",
+                                description = "Get to know the district of ${location.name} through a quick quiz",
                                 loading = true
                             )
                         updateCardPhoto(result, _admin)
@@ -88,7 +87,7 @@ class TriviaCardListViewModel @Inject constructor(
                         _country.value =
                             TriviaCardState(
                                 title = location.name,
-                                description = "Learn more about ${location.name} through a quick quiz",
+                                description = "Test your knowledge of the country of ${location.name}!",
                                 loading = true
                             )
                         updateCardPhoto(result, _country)
@@ -98,6 +97,9 @@ class TriviaCardListViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Updates a cards photo based on a FetchPlaceResponse
+     */
     private fun updateCardPhoto(result: FetchPlaceResponse, state: MutableState<TriviaCardState>, ) {
         val metadata = result.place.photoMetadatas
         if (metadata == null || metadata.isEmpty())
@@ -112,8 +114,12 @@ class TriviaCardListViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Update the location with users current location using the Android API.
+     */
     @RequiresPermission(Manifest.permission.ACCESS_COARSE_LOCATION)
     fun updateLocationWithCurrentLocation() {
+        _state.value = TriviaCardListState(state.value.placePredictions, state.value.locationId, true, state.value.shouldShowRationale)
         val response = repository.getCurrentPlace()
         response.addOnCompleteListener { task ->
             if (task.isSuccessful) {
@@ -122,11 +128,18 @@ class TriviaCardListViewModel @Inject constructor(
             } else {
                 val exception = task.exception
                 if (exception is ApiException) {
-                    //TODO Add error state when location of user could not be fetched.
+                    _state.value = TriviaCardListState(state.value.placePredictions, state.value.locationId, true, state.value.shouldShowRationale)
+
                 }
             }
         }
     }
 
+    fun enableShouldShowRationale() {
+        _state.value = TriviaCardListState(isLoading = state.value.isLoading, shouldShowRationale = true, locationId = state.value.locationId, placePredictions = state.value.placePredictions)
+    }
 
+    fun disableShouldShowRationale() {
+        _state.value = TriviaCardListState(isLoading = state.value.isLoading, shouldShowRationale = false, locationId = state.value.locationId, placePredictions = state.value.placePredictions)
+    }
 }
