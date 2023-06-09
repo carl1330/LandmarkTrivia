@@ -25,6 +25,9 @@ import se.umu.cs.dv21cgn.landmarktrivia.ui.screens.Screen
 import se.umu.cs.dv21cgn.landmarktrivia.ui.screens.triviacardlistscreen.components.SearchBar
 import se.umu.cs.dv21cgn.landmarktrivia.ui.screens.triviacardlistscreen.components.TriviaCard
 
+/**
+ * Main screen of the application
+ */
 @Composable
 fun TriviaCardListScreen(
     navController: NavController,

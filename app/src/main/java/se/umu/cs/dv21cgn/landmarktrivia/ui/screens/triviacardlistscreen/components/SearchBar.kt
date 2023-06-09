@@ -38,6 +38,10 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberPermissionState
 import se.umu.cs.dv21cgn.landmarktrivia.ui.screens.triviacardlistscreen.TriviaCardListViewModel
 
+/**
+ * The searchbar composable, accepts either user input or the user can select to
+ * update their location by using the devices location.
+ */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class,
     ExperimentalComposeUiApi::class
 )

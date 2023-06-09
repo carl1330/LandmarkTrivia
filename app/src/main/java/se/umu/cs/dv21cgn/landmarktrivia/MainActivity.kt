@@ -19,6 +19,10 @@ import se.umu.cs.dv21cgn.landmarktrivia.ui.screens.Screen
 import se.umu.cs.dv21cgn.landmarktrivia.ui.screens.triviacardlistscreen.TriviaCardListScreen
 import se.umu.cs.dv21cgn.landmarktrivia.ui.screens.triviagamescreen.TriviaGameScreen
 
+/**
+ * This activity is used mainly for initializing the Place client as well as
+ * setting up the navcontroller.
+ */
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

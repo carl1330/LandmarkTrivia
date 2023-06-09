@@ -15,6 +15,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 
+
+/**
+ * Panel holding the question and the different choices in the form of radio buttons
+ */
 @Composable
 fun QuestionPanel(
     question: String,

@@ -15,6 +15,9 @@ import se.umu.cs.dv21cgn.landmarktrivia.data.TriviaCardListImpl
 import se.umu.cs.dv21cgn.landmarktrivia.data.TriviaCardListRepository
 import javax.inject.Singleton
 
+/**
+ * Data injection using hilt
+ */
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {

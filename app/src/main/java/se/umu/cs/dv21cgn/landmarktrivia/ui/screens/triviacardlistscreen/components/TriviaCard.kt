@@ -28,6 +28,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import se.umu.cs.dv21cgn.landmarktrivia.R
 
+/**
+ * Composable responsible for creating the Trivia Cards on the applications main screen.
+ */
 @Composable
 fun TriviaCard(
     modifier: Modifier = Modifier,

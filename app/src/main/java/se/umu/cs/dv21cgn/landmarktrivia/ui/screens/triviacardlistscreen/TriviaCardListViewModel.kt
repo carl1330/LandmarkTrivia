@@ -16,6 +16,9 @@ import se.umu.cs.dv21cgn.landmarktrivia.data.placeapi.AutocompletePredictionResp
 import se.umu.cs.dv21cgn.landmarktrivia.ui.screens.triviacardlistscreen.components.TriviaCardState
 import javax.inject.Inject
 
+/**
+ * Viewmodel for the main screen of the application
+ */
 @HiltViewModel
 class TriviaCardListViewModel @Inject constructor(
     private val repository: TriviaCardListRepository,
@@ -135,10 +138,16 @@ class TriviaCardListViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Updates state to enable permission rationale
+     */
     fun enableShouldShowRationale() {
         _state.value = TriviaCardListState(isLoading = state.value.isLoading, shouldShowRationale = true, locationId = state.value.locationId, placePredictions = state.value.placePredictions)
     }
 
+    /**
+     * Updates state to disable permission rationale
+     */
     fun disableShouldShowRationale() {
         _state.value = TriviaCardListState(isLoading = state.value.isLoading, shouldShowRationale = false, locationId = state.value.locationId, placePredictions = state.value.placePredictions)
     }
